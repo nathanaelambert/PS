@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Embedded Tutorial with Highlights Interface</title>
+  <style>
+    body { margin: 0; padding: 0; background: #222; }
+    .iframe-container {
+      position: relative;
+      width: 100vw;
+      height: calc(100vw * 9 / 16);
+      max-height: 100vh;
+      margin: 0 auto;
+      overflow: hidden;
+      background: black;
+    }
+    iframe {
+      border: none;
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+    .tutorial-widget {
+      position: relative;
+      top: 1%;
+      left: 70%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: rgba(40,40,80,0.97);
+      padding: 24px 32px;
+      color: #fff;
+      box-shadow: 0 4px 24px rgba(20,20,40,0.25);
+      border-radius: 12px;
+      max-width: 340px;
+      text-align: center;
+      font-family: sans-serif;
+      user-select: none;
+    }
+    .tutorial-btn {
+      margin-top: 14px;
+      padding: 8px 16px;
+      font-size: 1rem;
+      background: #4e76fc;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .tutorial-btn:active {
+      background: #2444ad;
+    }
+    /* Pulsing highlight circle for "pulse" type */
+    .click-highlight {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 3px solid #4e76fc;
+      box-shadow: 0 0 10px 3px rgba(78,118,252,0.8);
+      pointer-events: none;
+      animation: pulse 1.5s ease-in-out infinite;
+      transform: translate(-50%, -50%);
+      z-index: 15;
+      background: transparent;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; box-shadow: 0 0 10px 3px rgba(78,118,252,0.8);}
+      50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.5; box-shadow: 0 0 20px 6px rgba(78,118,252,0.4);}
+    }
+    /* Vertical arrows container */
+    .v-arrows {
+      position: absolute;
+      width: 50px;
+      height: 70px;
+      pointer-events: none;
+      z-index: 15;
+      top: 0; left: 0;
+      transform: translate(-50%, -50%);
+      animation: pulse 1.5s ease-in-out infinite;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .v-arrows svg {
+      fill: #4CAF50; /* green */
+      width: 30px;
+      height: 30px;
+      filter: drop-shadow(0 0 2px rgba(0, 128, 0, 0.7));
+    }
+    .v-arrows .checkmark {
+      fill: transparent;
+      stroke: #4CAF50;
+      stroke-width: 4;
+      width: 34px;
+      height: 24px;
+      margin: 0 -2px;
+    }
+    /* Horizontal arrows container */
+    .h-arrows {
+      position: absolute;
+      width: 70px;
+      height: 50px;
+      pointer-events: none;
+      z-index: 15;
+      top: 0; left: 0;
+      transform: translate(-50%, -50%);
+      animation: pulse 1.5s ease-in-out infinite;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .h-arrows svg {
+      fill: #f44336; /* red */
+      width: 30px;
+      height: 30px;
+      filter: drop-shadow(0 0 2px rgba(255, 0, 0, 0.7));
+    }
+    .h-arrows .checkmark {
+      fill: transparent;
+      stroke: #f44336;
+      stroke-width: 4;
+      width: 24px;
+      height: 24px;
+      margin: 0 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="iframe-container" id="iframeContainer">
+    <iframe src="https://onlinesequencer.net/4984808" title="Online Sequencer" id="tutorialIframe"></iframe>
+    <div class="tutorial-widget" id="tutorialWidget">
+      <div id="tutorialStep"></div>
+      <button class="tutorial-btn" id="nextBtn">Next</button>
+    </div>
+  </div>
+  <script>
+    class Highlight {
+      create(container) {}
+      clear() {}
+      get_ref() { return null; }
+      position(x, y) {}
+    }
+
+    class PulseHighlight extends Highlight {
+      constructor(ref, x, y) {
+        super();
+        this.ref = ref;
+        this.x = x;
+        this.y = y;
+        this.element = null;
+      }
+      create(container) {
+        this.element = document.createElement('div');
+        this.element.className = 'click-highlight';
+        container.appendChild(this.element);
+      }
+      clear() {
+        if (this.element) {
+          this.element.remove();
+          this.element = null;
+        }
+      }
+      get_ref() {
+        return this.ref;
+      }
+      position(x, y) {
+        if(this.element){
+          this.element.style.left = x + 'px';
+          this.element.style.top = y + 'px';
+        }
+      }
+    }
+
+    class MultiPulseHighlight extends Highlight {
+      constructor(highlights) {
+        super();
+        this.highlights = highlights; // Array of [ref, x, y]
+        this.elements = [];
+      }
+      create(container) {
+        this.clear();
+        this.elements = this.highlights.map(() => {
+          const el = document.createElement('div');
+          el.className = 'click-highlight';
+          container.appendChild(el);
+          return el;
+        });
+      }
+      clear() {
+        if (this.elements.length > 0) {
+          this.elements.forEach(el => el.remove());
+          this.elements = [];
+        }
+      }
+      get_ref() {
+        // No single ref for multiple highlights
+        return null;
+      }
+      position(containerRect) {
+        this.highlights.forEach(([ref, x, y], i) => {
+          const refPoint = getReferencePointPosition(ref, containerRect);
+          if(refPoint && this.elements[i]){
+            let leftPx = refPoint.x + x;
+            let topPx = refPoint.y + y;
+            leftPx = Math.min(Math.max(leftPx, containerRect.left), containerRect.right);
+            topPx = Math.min(Math.max(topPx, containerRect.top), containerRect.bottom);
+            const relativeLeft = leftPx - containerRect.left;
+            const relativeTop = topPx - containerRect.top;
+            this.elements[i].style.left = relativeLeft + 'px';
+            this.elements[i].style.top = relativeTop + 'px';
+          }
+        });
+      }
+    }
+
+    class VArrowsHighlight extends Highlight {
+      constructor(ref, x, y) { super(); this.ref = ref; this.x = x; this.y = y; this.element = null; }
+      create(container) {
+        this.element = document.createElement('div');
+        this.element.className = 'v-arrows';
+        this.element.innerHTML = `
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 4l-4 4h3v6h2V8h3z"/>
+          </svg>
+          <svg class="checkmark" viewBox="0 0 24 24" aria-hidden="true">
+            <polyline points="4 12 10 18 20 6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" style="transform: rotate(180deg);">
+            <path d="M12 4l-4 4h3v6h2V8h3z"/>
+          </svg>
+        `;
+        container.appendChild(this.element);
+      }
+      clear() { if (this.element) { this.element.remove(); this.element = null; } }
+      get_ref() { return this.ref; }
+      position(x, y) {
+        if(this.element){
+          this.element.style.left = x + 'px';
+          this.element.style.top = y + 'px';
+        }
+      }
+    }
+
+    class HArrowsHighlight extends Highlight {
+      constructor(ref, x, y) { super(); this.ref = ref; this.x = x; this.y = y; this.element = null; }
+      create(container) {
+        this.element = document.createElement('div');
+        this.element.className = 'h-arrows';
+        this.element.innerHTML = `
+          <svg viewBox="0 0 24 24" aria-hidden="true" style="transform: rotate(270deg);">
+            <path d="M12 4l-4 4h3v6h2V8h3z"/>
+          </svg>
+          <svg class="checkmark" viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-width="4" />
+            <line x1="6" y1="18" x2="18" y2="6" stroke-linecap="round" stroke-width="4" />
+          </svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" style="transform: rotate(90deg);">
+            <path d="M12 4l-4 4h3v6h2V8h3z"/>
+          </svg>
+        `;
+        container.appendChild(this.element);
+      }
+      clear() { if (this.element) { this.element.remove(); this.element = null; } }
+      get_ref() { return this.ref; }
+      position(x, y) {
+        if(this.element){
+          this.element.style.left = x + 'px';
+          this.element.style.top = y + 'px';
+        }
+      }
+    }
+
+    class NoneHighlight extends Highlight {
+      create() {}
+      clear() {}
+      get_ref() { return null; }
+      position() {}
+    }
+
+    class Step {
+      constructor(caption, highlight) {
+        this.caption = caption;
+        this.highlight = highlight;
+      }
+    }
+
+    const steps = [
+      new Step("Welcome! Follow the tutorial. <br>Click \"Next\" for every step.", new NoneHighlight()),
+      new Step("Close the ad", new PulseHighlight("bottom-right", -70, -70)),
+      new Step("Enter edit mode", new PulseHighlight("top-left", 220, 140)),
+      new Step("Use the selection tool", new PulseHighlight("top-left", 245, 140)),
+      new Step("Turn off Auto scroll", new PulseHighlight("bottom-middle", 100, -50)),
+      new Step("Close the side panel", new PulseHighlight("top-right", -35, 145)),
+      new Step("Open the instrument option menu", new PulseHighlight("top-left", 545, 140)),
+      new Step("Lock the bass", new PulseHighlight("top-left", 505, 420)),
+      new Step("Lock the electric guitar", new PulseHighlight("top-left", 985, 380)),
+      new Step("Close the instrument option menu", new PulseHighlight("top-left", 545, 140)),
+      new Step("Press \"SPACE\" to play/pause the song", new NoneHighlight()),
+      new Step("Listen to the bass, (black notes)", new NoneHighlight()),
+      new Step("Listen to the piano, (blue notes)", new NoneHighlight()),
+      new Step("The electric guitar is silent, (green notes)", new NoneHighlight()),
+      new Step("The green notes are only here to show a range", new NoneHighlight()),
+      new Step("Your task is to rearrange the piano, (blue notes)", new NoneHighlight()),
+      new Step("Follow these 5 rules:"),
+      new Step("1. move the blue notes by drag and drop", new PulseHighlight("top-left", 300, 460)),
+      new Step("2. move the blue notes vertically", new VArrowsHighlight("top-left", 300, 460)),
+      new Step("3. do not move the notes horizontally", new HArrowsHighlight("top-left", 300, 460)),
+      new Step("4. move every blue note inside the range (green notes)",new NoneHighlight()),
+      new Step("For example, this note is inside the range", new PulseHighlight("top-left", 700, 540)),
+      new Step("And this note is outside the range", new PulseHighlight("top-left", 300, 270)),
+      new Step("There are 3 notes per bar. Be careful, some are stacked for now.", new MultiPulseHighlight([
+        ["top-left", 700, 350],
+        ["top-left", 1100, 400],
+        ["top-left", 1500, 310],
+      ])),
+      new Step("5. Do not stack multiple blue notes", new NoneHighlight()),
+      new Step("Go ahead, and move the notes until you are happy with how things sound, while respecting the 5 rules !", new NoneHighlight()),
+      new Step("Reminder: 1. Move the blue notes 2.vertically, 3. not horizontally, 4. in the green range, 5. without stacking them."),
+    ];
+
+    let currentStep = 0;
+    const stepDiv = document.getElementById("tutorialStep");
+    const nextBtn = document.getElementById("nextBtn");
+    const tutorialWidget = document.getElementById("tutorialWidget");
+    const iframeContainer = document.getElementById("iframeContainer");
+
+    let highlight = null;
+
+    function getReferencePointPosition(ref, rect) {
+      switch (ref) {
+        case "top-left": return { x: rect.left, y: rect.top };
+        case "top-right": return { x: rect.right, y: rect.top };
+        case "bottom-left": return { x: rect.left, y: rect.bottom };
+        case "bottom-right": return { x: rect.right, y: rect.bottom };
+        case "middle": return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        case "bottom-middle": return { x: rect.left + rect.width / 2, y: rect.bottom };
+        default: return null;
+      }
+    }
+
+    function updateTutorial() {
+      if (currentStep >= steps.length) {
+        tutorialWidget.style.display = 'block';
+        if(highlight) highlight.clear();
+        nextBtn.style.display = 'none';
+        return;
+      }
+      const step = steps[currentStep];
+      stepDiv.innerHTML = step.caption;
+      if (step.caption.startsWith("Reminder: 1. Move")) {
+        nextBtn.textContent = "I am happy with the result";
+      } else {
+        nextBtn.textContent = currentStep === steps.length - 1 ? "Next" : "Next";
+      }
+      
+      nextBtn.style.display = 'inline-block';
+
+      if (highlight) {
+        highlight.clear();
+        highlight = null;
+      }
+
+      if(step.highlight instanceof MultiPulseHighlight){
+        step.highlight.create(iframeContainer);
+        const rect = iframeContainer.getBoundingClientRect();
+        step.highlight.position(rect);
+        highlight = step.highlight;
+      } else {
+        const ref = step.highlight.get_ref();
+        if (!ref) return;
+        const rect = iframeContainer.getBoundingClientRect();
+        const refPoint = getReferencePointPosition(ref, rect);
+        if (!refPoint) return;
+        const leftPx = refPoint.x + step.highlight.x;
+        const topPx = refPoint.y + step.highlight.y;
+        const relativeLeft = Math.min(Math.max(leftPx, rect.left), rect.right) - rect.left;
+        const relativeTop = Math.min(Math.max(topPx, rect.top), rect.bottom) - rect.top;
+        step.highlight.create(iframeContainer);
+        step.highlight.position(relativeLeft, relativeTop);
+        highlight = step.highlight;
+      }
+    }
+
+    nextBtn.addEventListener('click', () => {
+      const step = steps[currentStep];
+      if (step.caption.startsWith("Reminder: 1. Move")) {
+        window.open("https://forms.gle/NN6JHykRKSAfAGru6", "_blank");
+        return; // do not advance further unless you want
+      }
+      currentStep++;
+      updateTutorial();
+    });
+
+    updateTutorial();
+
+    window.addEventListener('resize', () => {
+      // Only update if not MultiPulseHighlight (which handles resize internally)
+      if(highlight && !(highlight instanceof MultiPulseHighlight) && highlight.get_ref()){
+        updateTutorial();
+      }
+    });
+  </script>
+</body>
+</html>
