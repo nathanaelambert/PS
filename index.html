@@ -321,6 +321,8 @@
       new Step("5. Do not stack multiple blue notes", new NoneHighlight()),
       new Step("Go ahead, and move the notes until you are happy with how things sound, while respecting the 5 rules !", new NoneHighlight()),
       new Step("Reminder: 1. Move the blue notes 2.vertically, 3. not horizontally, 4. in the green range, 5. without stacking them."),
+      new Step("Take a screenshot of your results"),
+
     ];
 
     let currentStep = 0;
@@ -388,10 +390,7 @@
 
     nextBtn.addEventListener('click', () => {
       const step = steps[currentStep];
-      if (step.caption.startsWith("Reminder: 1. Move")) {
-        window.open("https://forms.gle/NN6JHykRKSAfAGru6", "_blank");
-        return; // do not advance further unless you want
-      }
+      
       currentStep++;
       updateTutorial();
     });
