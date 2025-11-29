@@ -135,6 +135,9 @@
     <iframe src="https://onlinesequencer.net/4984808" title="Online Sequencer" id="tutorialIframe"></iframe>
     <div class="tutorial-widget" id="tutorialWidget">
       <div id="tutorialStep"></div>
+      <div id="tutorialTimer" style="margin-top:8px;font-size:0.9rem;opacity:0.9;">
+        Time left: 20:00
+      </div>
       <button class="tutorial-btn" id="nextBtn">Next</button>
     </div>
   </div>
@@ -300,11 +303,7 @@
       new Step("Lock the bass", new PulseHighlight("top-left", 505, 420)),
       new Step("Lock the electric guitar", new PulseHighlight("top-left", 985, 380)),
       new Step("Close the instrument option menu", new PulseHighlight("top-left", 545, 140)),
-      new Step("Start the song", new PulseHighlight("top-left", 20, 140)),
-      new Step("Listen to the bass, (black notes)", new NoneHighlight()),
-      new Step("Listen to the piano, (blue notes)", new NoneHighlight()),
-      new Step("The electric guitar is silent, (green notes)", new NoneHighlight()),
-      new Step("The green notes are only here to show a range", new NoneHighlight()),
+      new Step("The green notes are silent, they are only here to show a range", new NoneHighlight()),
       new Step("Your task is to rearrange the piano, (blue notes)", new NoneHighlight()),
       new Step("Follow these 5 rules:"),
       new Step("1. move the blue notes by drag and drop", new PulseHighlight("top-left", 300, 460)),
@@ -319,6 +318,7 @@
         ["top-left", 1500, 310],
       ])),
       new Step("5. Do not stack multiple blue notes", new NoneHighlight()),
+      new Step("Start the song", new PulseHighlight("top-left", 20, 140)),
       new Step("Go ahead, and move the notes until you are happy with how things sound, while respecting the 5 rules !", new NoneHighlight()),
       new Step("Reminder: 1. Move the blue notes 2.vertically, 3. not horizontally, 4. in the green range, 5. without stacking them."),
       new Step("Take a screenshot of your results"),
@@ -330,6 +330,39 @@
     const nextBtn = document.getElementById("nextBtn");
     const tutorialWidget = document.getElementById("tutorialWidget");
     const iframeContainer = document.getElementById("iframeContainer");
+    const tutorialTimerEl = document.getElementById("tutorialTimer");
+    let remainingSeconds = 20 * 60; // 20 minutes
+    let timerInterval = null;
+
+    function formatTime(totalSeconds) {
+      const m = Math.floor(totalSeconds / 60);
+      const s = totalSeconds % 60;
+      const mm = m.toString().padStart(2, "0");
+      const ss = s.toString().padStart(2, "0");
+      return `${mm}:${ss}`;
+    }
+
+    function startTutorialTimer() {
+      // initial render
+      tutorialTimerEl.textContent = "Time left: " + formatTime(remainingSeconds);
+
+      timerInterval = setInterval(() => {
+        remainingSeconds--;
+        if (remainingSeconds <= 0) {
+          remainingSeconds = 0;
+          tutorialTimerEl.textContent = "Time left: 00:00";
+          clearInterval(timerInterval);
+          // optional: do something when time is up
+          // nextBtn.disabled = true;
+          // nextBtn.textContent = "Time is over";
+          return;
+        }
+        tutorialTimerEl.textContent = "Time left: " + formatTime(remainingSeconds);
+      }, 1000);
+    }
+
+    startTutorialTimer();
+
 
     let highlight = null;
 
